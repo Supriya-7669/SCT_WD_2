@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stopwatch with Lap Times</title>
+  <style>
+    :root {
+      --color-bg: #ffffff;
+      --color-text-primary: #111827;
+      --color-text-secondary: #6b7280;
+      --color-button-primary-bg: #2563eb;
+      --color-button-primary-hover-bg: #1d4ed8;
+      --color-button-primary-active-bg: #1e40af;
+      --color-button-secondary-bg: #f3f4f6;
+      --color-button-secondary-hover-bg: #e5e7eb;
+      --color-button-secondary-active-bg: #d1d5db;
+      --radius: 0.75rem;
+      --font-headline-size: 3.5rem;
+      --font-body-size: 1.125rem;
+      --shadow-light: 0 4px 8px rgba(0, 0, 0, 0.08);
+      --spacing-xxl: 4rem;
+      --spacing-xl: 3rem;
+      --spacing-lg: 2rem;
+      --spacing-md: 1.5rem;
+      --spacing-sm: 1rem;
+      --spacing-xs: 0.5rem;
+      --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --font-mono: 'Courier New', Courier, monospace;
+      --scrollbar-bg: #f3f4f6;
+      --scrollbar-thumb: #cbd5e1;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--color-bg);
+      color: var(--color-text-secondary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+        Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      font-size: var(--font-body-size);
+      line-height: 1.6;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: var(--spacing-xxl) var(--spacing-lg);
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background: var(--color-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-light);
+      padding: var(--spacing-xl);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      user-select: none;
+    }
+
+    /* Updated stopwatch image styles */
+    #stopwatch-img {
+      width: 96px;
+      height: 96px;
+      margin-bottom: var(--spacing-lg);
+      stroke: var(--color-text-primary);
+      stroke-width: 1.5;
+      fill: none;
+      user-select: none;
+      user-drag: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    h1 {
+      font-weight: 700;
+      font-size: var(--font-headline-size);
+      margin: 0 0 var(--spacing-lg) 0;
+      color: var(--color-text-primary);
+      text-align: center;
+      line-height: 1.1;
+      user-select: text;
+    }
+
+    #time-display {
+      font-family: var(--font-mono);
+      font-size: 3.75rem;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin-bottom: var(--spacing-xl);
+      letter-spacing: 0.15em;
+      min-width: 280px;
+      text-align: center;
+      user-select: text;
+      user-drag: none;
+    }
+
+    .buttons {
+      display: flex;
+      gap: var(--spacing-md);
+      width: 100%;
+      justify-content: center;
+      margin-bottom: var(--spacing-xl);
+      flex-wrap: wrap;
+    }
+
+    button {
+      flex: 1 1 110px;
+      border: none;
+      border-radius: var(--radius);
+      padding: var(--spacing-sm) 0;
+      font-weight: 700;
+      font-size: 1.125rem;
+      cursor: pointer;
+      transition: background-color var(--transition), transform var(--transition), color var(--transition);
+      box-shadow: var(--shadow-light);
+      user-select: none;
+      will-change: transform;
+      min-width: 90px;
+      line-height: 1.2;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.4;
+      box-shadow: none;
+      transform: none;
+      color: var(--color-text-secondary);
+      background-color: var(--color-button-secondary-bg);
+    }
+
+    #start-pause-btn {
+      background-color: var(--color-button-primary-bg);
+      color: white;
+    }
+
+    #start-pause-btn:hover:not(:disabled),
+    #start-pause-btn:focus-visible:not(:disabled) {
+      background-color: var(--color-button-primary-hover-bg);
+      outline: none;
+      transform: scale(1.06);
+      box-shadow: 0 8px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    #start-pause-btn:active:not(:disabled) {
+      background-color: var(--color-button-primary-active-bg);
+      transform: scale(0.98);
+      box-shadow: 0 4px 6px rgba(30, 64, 175, 0.3);
+    }
+
+    #lap-btn, #reset-btn {
+      background-color: var(--color-button-secondary-bg);
+      color: var(--color-text-primary);
+    }
+
+    #lap-btn:hover:not(:disabled),
+    #reset-btn:hover:not(:disabled),
+    #lap-btn:focus-visible:not(:disabled),
+    #reset-btn:focus-visible:not(:disabled) {
+      background-color: var(--color-button-secondary-hover-bg);
+      outline: none;
+      transform: scale(1.04);
+      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    #lap-btn:active:not(:disabled),
+    #reset-btn:active:not(:disabled) {
+      background-color: var(--color-button-secondary-active-bg);
+      transform: scale(0.97);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.07);
+    }
+
+    #lap-list {
+      width: 100%;
+      max-height: 300px;
+      overflow-y: auto;
+      border-radius: var(--radius);
+      background-color: #f9fafb;
+      box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.06);
+      padding: var(--spacing-sm);
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      color: var(--color-text-secondary);
+      user-select: text;
+      scrollbar-width: thin;
+      scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-bg);
+    }
+    #lap-list::-webkit-scrollbar {
+      width: 8px;
+    }
+    #lap-list::-webkit-scrollbar-track {
+      background: var(--scrollbar-bg);
+      border-radius: var(--radius);
+    }
+    #lap-list::-webkit-scrollbar-thumb {
+      background-color: var(--scrollbar-thumb);
+      border-radius: var(--radius);
+      border: 2px solid var(--scrollbar-bg);
+    }
+
+    #lap-list h2 {
+      margin: 0 0 var(--spacing-sm) 0;
+      color: var(--color-text-primary);
+      font-weight: 700;
+      font-size: 1.3rem;
+      user-select: none;
+      border-bottom: 2px solid #e5e7eb;
+      padding-bottom: 0.3rem;
+    }
+
+    #lap-list ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    #lap-list li {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.375rem 0.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      transition: background-color 0.2s ease;
+    }
+
+    #lap-list li:last-child {
+      border-bottom: none;
+    }
+
+    #lap-list li:hover {
+      background-color: #eef2ff;
+      color: var(--color-button-primary-bg);
+      font-weight: 600;
+    }
+
+    @media (max-width: 400px) {
+      #time-display {
+        font-size: 2.75rem;
+        min-width: 210px;
+      }
+      h1 {
+        font-size: 2.5rem;
+      }
+      .buttons {
+        gap: var(--spacing-sm);
+      }
+      button {
+        min-width: 80px;
+        flex: 1 1 90px;
+      }
+      #stopwatch-img {
+        width: 72px;
+        height: 72px;
+        margin-bottom: var(--spacing-md);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="container" role="main" aria-label="Stopwatch with Lap times">
+    <svg id="stopwatch-img" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true" role="img" aria-label="stop watch">
+      <circle cx="12" cy="12" r="9" stroke-width="1.5"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6l4 2"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 2h6"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2v2"/>
+    </svg>
+    <h1>Stopwatch</h1>
+    <div id="time-display" aria-live="polite" aria-atomic="true" aria-label="Elapsed time">00:00:00.000</div>
+    <div class="buttons">
+      <button id="start-pause-btn" type="button" aria-label="Start or pause stopwatch">Start</button>
+      <button id="lap-btn" type="button" aria-label="Record lap time" disabled>Lap</button>
+      <button id="reset-btn" type="button" aria-label="Reset stopwatch" disabled>Reset</button>
+    </div>
+    <section id="lap-list" aria-label="Lap times">
+      <h2>Laps</h2>
+      <ul id="laps">
+      </ul>
+    </section>
+  </main>
+  <script>
+    (function() {
+      const startPauseBtn = document.getElementById('start-pause-btn');
+      const lapBtn = document.getElementById('lap-btn');
+      const resetBtn = document.getElementById('reset-btn');
+      const timeDisplay = document.getElementById('time-display');
+      const lapsUl = document.getElementById('laps');
+
+      let startTime = 0;
+      let elapsedTime = 0;
+      let timerId = null;
+      let running = false;
+      let laps = [];
+
+      function formatTime(timeMs) {
+        const ms = timeMs % 1000;
+        const totalSeconds = Math.floor(timeMs / 1000);
+        const seconds = totalSeconds % 60;
+        const minutes = Math.floor(totalSeconds / 60) % 60;
+        const hours = Math.floor(totalSeconds / 3600);
+
+        const hStr = hours.toString().padStart(2, '0');
+        const mStr = minutes.toString().padStart(2, '0');
+        const sStr = seconds.toString().padStart(2, '0');
+        const msStr = ms.toString().padStart(3, '0');
+
+        return `${hStr}:${mStr}:${sStr}.${msStr}`;
+      }
+
+      function updateDisplay() {
+        const now = Date.now();
+        elapsedTime = now - startTime;
+        timeDisplay.textContent = formatTime(elapsedTime);
+      }
+
+      function tick() {
+        if (!running) return;
+        updateDisplay();
+        timerId = requestAnimationFrame(tick);
+      }
+
+      function updateButtons() {
+        startPauseBtn.textContent = running ? "Pause" : "Start";
+        lapBtn.disabled = !running;
+        resetBtn.disabled = running || elapsedTime === 0;
+      }
+
+      function renderLaps() {
+        lapsUl.innerHTML = '';
+        if (laps.length === 0) {
+          const li = document.createElement('li');
+          li.textContent = 'No laps recorded.';
+          li.style.color = 'var(--color-text-secondary)';
+          lapsUl.appendChild(li);
+          return;
+        }
+        let prev = 0;
+        laps.forEach((lapTime, index) => {
+          const li = document.createElement('li');
+          const lapNumber = document.createElement('div');
+          lapNumber.textContent = `Lap ${index + 1}`;
+          lapNumber.style.fontWeight = '700';
+          const lapDiff = lapTime - prev;
+          prev = lapTime;
+
+          const lapTimeStr = document.createElement('div');
+          lapTimeStr.textContent = formatTime(lapDiff);
+
+          li.appendChild(lapNumber);
+          li.appendChild(lapTimeStr);
+          lapsUl.appendChild(li);
+        });
+      }
+
+      startPauseBtn.addEventListener('click', () => {
+        if (running) {
+          running = false;
+          cancelAnimationFrame(timerId);
+          updateDisplay();
+        } else {
+          running = true;
+          startTime = Date.now() - elapsedTime;
+          tick();
+        }
+        updateButtons();
+      });
+
+      lapBtn.addEventListener('click', () => {
+        if (!running) return;
+        laps.push(elapsedTime);
+        renderLaps();
+      });
+
+      resetBtn.addEventListener('click', () => {
+        running = false;
+        cancelAnimationFrame(timerId);
+        elapsedTime = 0;
+        laps = [];
+        timeDisplay.textContent = "00:00:00.000";
+        renderLaps();
+        updateButtons();
+      });
+
+      renderLaps();
+      updateButtons();
+    })();
+  </script>
+</body>
+</html>
